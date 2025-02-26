@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverActions: {
-      allowedOrigins: ['localhost:3000'],
-    },
+    // 最新版Next.jsとの互換性問題を修正
+    serverActions: true,
+    serverComponentsExternalPackages: ['bcrypt'],
+    esmExternals: 'loose',
   },
   typescript: {
     ignoreBuildErrors: true,
