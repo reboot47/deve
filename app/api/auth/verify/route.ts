@@ -81,10 +81,25 @@ export async function POST(request: Request) {
 
     // SMSで認証コードを送信（Twilioの場合は国際形式に変換）
     const twilioPhoneNumber = `+81${phoneNumber.slice(1)}`;
-    const sent = await sendVerificationCode(twilioPhoneNumber, code);
-    if (!sent) {
+    console.log('SMS送信前の電話番号変換:', { 
+      original: phoneNumber, 
+      formatted: twilioPhoneNumber 
+    });
+    
+    try {
+      const sent = await sendVerificationCode(twilioPhoneNumber, code);
+      console.log('SMS送信結果:', { sent });
+      
+      if (!sent) {
+        return NextResponse.json(
+          { error: '認証コードの送信に失敗しました' },
+          { status: 500 }
+        );
+      }
+    } catch (smsError) {
+      console.error('SMS送信中の例外:', smsError);
       return NextResponse.json(
-        { error: '認証コードの送信に失敗しました' },
+        { error: 'SMS送信処理中にエラーが発生しました' },
         { status: 500 }
       );
     }
