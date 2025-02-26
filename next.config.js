@@ -38,13 +38,18 @@ const nextConfig = {
   },
   // 静的ファイルへのアクセスを許可
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'res.cloudinary.com'],
     remotePatterns: [
       {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',
         pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
       },
     ],
     unoptimized: true,

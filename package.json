@@ -19,6 +19,7 @@
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.5.1",
     "framer-motion": "^12.4.7",
     "http": "^0.0.1-security",
     "next": "15.1.7",

@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
 import { authOptions } from '../auth/[...nextauth]/route';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Cloudinary設定
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request: Request) {
   try {
@@ -44,17 +50,39 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 保存するファイル名を生成（ユニークな名前にする）
-    const fileName = `${session.user.phoneNumber}-${Date.now()}-${file.name}`;
-    const path = join(process.cwd(), 'public/uploads', fileName);
+    // Base64形式に変換
+    const base64Data = buffer.toString('base64');
+    const base64Prefix = `data:${file.type};base64,`;
+    const fileBase64 = `${base64Prefix}${base64Data}`;
 
-    // ファイルを保存
-    await writeFile(path, buffer);
+    try {
+      // Cloudinaryにアップロード
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(
+          fileBase64,
+          {
+            folder: 'linebuzz',
+            public_id: `${session.user.phoneNumber}-${Date.now()}`,
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+      });
 
-    // 画像のURLを返す
-    const imageUrl = `/uploads/${fileName}`;
+      // 画像のURLを返す
+      const imageUrl = (result as any).secure_url;
+      console.log('Cloudinaryアップロード成功:', imageUrl);
 
-    return NextResponse.json({ url: imageUrl });
+      return NextResponse.json({ url: imageUrl });
+    } catch (cloudinaryError) {
+      console.error('Cloudinaryアップロードエラー:', cloudinaryError);
+      return NextResponse.json(
+        { error: '画像のアップロードに失敗しました (Cloudinary)' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('画像アップロードエラー:', error);
     return NextResponse.json(
