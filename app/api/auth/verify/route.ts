@@ -20,6 +20,12 @@ export async function POST(request: Request) {
       where: { phoneNumber },
     });
 
+    console.log('ユーザー検索結果:', { 
+      phoneNumber, 
+      userFound: !!existingUser,
+      isPasswordReset: request.headers.get('x-request-type') === 'password-reset'
+    });
+
     // パスワードリセットの場合は既存ユーザーが必要、新規登録の場合は既存ユーザーがいてはいけない
     const isPasswordReset = request.headers.get('x-request-type') === 'password-reset';
     
