@@ -173,21 +173,8 @@ export default function ProfilePage() {
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {/* プロフィール画像セクション */}
             <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center space-x-6">
-                <div className="relative w-24 h-24">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="プロフィール画像"
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-3xl text-gray-400">👤</span>
-                    </div>
-                  )}
-                </div>
-                <div>
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative w-32 h-32 cursor-pointer">
                   <input
                     type="file"
                     id="image"
@@ -196,13 +183,28 @@ export default function ProfilePage() {
                     onChange={handleImageChange}
                   />
                   <motion.label
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     htmlFor="image"
-                    className="inline-block px-4 py-2 border border-navy-700 rounded-md shadow-sm text-sm font-medium text-navy-700 bg-navy-100 hover:bg-navy-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-600 cursor-pointer"
+                    className="block w-full h-full rounded-full cursor-pointer overflow-hidden"
                   >
-                    画像を変更
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="プロフィール画像"
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-navy-100 flex items-center justify-center">
+                        <span className="text-3xl text-navy-600">👤</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
+                      <span className="text-white text-sm font-medium">画像を変更</span>
+                    </div>
                   </motion.label>
                 </div>
+                <p className="text-sm text-gray-500">クリックして画像をアップロード</p>
               </div>
             </div>
 

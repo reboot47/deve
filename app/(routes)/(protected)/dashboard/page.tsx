@@ -20,15 +20,17 @@ export default function DashboardPage() {
                 {session?.user?.phoneNumber}
               </span>
               <div className="relative">
-                <img
-                  src={session?.user?.image || '/images/default-avatar.png'}
+                <motion.img
+                  src={`${session?.user?.image || '/images/default-avatar.png'}?t=${Date.now()}`}
                   alt="プロフィール"
-                  className="h-8 w-8 rounded-full cursor-pointer hover:opacity-80 object-cover"
+                  className="h-10 w-10 rounded-full cursor-pointer border-2 border-transparent hover:border-navy-500 transition-all duration-200 object-cover"
                   onClick={() => router.push('/settings')}
                   onError={(e) => {
                     // 画像読み込みエラー時にデフォルト画像を表示
                     e.currentTarget.src = '/images/default-avatar.png';
                   }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 />
               </div>
             </div>

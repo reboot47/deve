@@ -2,10 +2,12 @@
 const nextConfig = {
   experimental: {
     // 最新版Next.jsとの互換性問題を修正
-    serverActions: true,
-    serverComponentsExternalPackages: ['bcrypt'],
-    esmExternals: 'loose',
+    serverActions: {
+      allowedOrigins: ['localhost:3002'],
+    },
   },
+  // 外部パッケージの設定
+  serverExternalPackages: ['bcrypt'],
   typescript: {
     ignoreBuildErrors: true,
   },
