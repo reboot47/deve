@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CodeVerificationProps {
   phoneNumber: string;
@@ -17,6 +17,15 @@ export default function CodeVerification({
   const [code, setCode] = useState('');
   const [timeLeft, setTimeLeft] = useState(600); // 10分 = 600秒
   const [error, setError] = useState('');
+  const [isResending, setIsResending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // マウント時に自動フォーカス
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -64,6 +73,43 @@ export default function CodeVerification({
     if (value.length <= 6) {
       setCode(value);
       setError('');
+      
+      // 6桁入力されたら自動的に送信
+      if (value.length === 6) {
+        setTimeout(() => {
+          onVerificationComplete(value);
+        }, 300);
+      }
+    }
+  };
+
+  // 認証コードを再送信する
+  const handleResendCode = async () => {
+    try {
+      setIsResending(true);
+      setError('');
+      
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '認証コードの再送信に失敗しました');
+      }
+      
+      // タイマーをリセット
+      setTimeLeft(600);
+      
+      // 成功メッセージを表示（エラーステートを一時的に使用）
+      setError('認証コードを再送信しました');
+      setTimeout(() => setError(''), 3000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '予期せぬエラーが発生しました');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -83,6 +129,7 @@ export default function CodeVerification({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <input
+            ref={inputRef}
             type="text"
             value={code}
             onChange={handleCodeChange}
@@ -90,22 +137,42 @@ export default function CodeVerification({
             maxLength={6}
             className="w-full px-4 py-2 text-center text-2xl tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-600 focus:border-transparent"
             required
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
         </div>
 
-        <div className="text-center text-sm text-gray-600">
-          残り時間: {formatTime(timeLeft)}
+        <div className="text-center text-sm text-gray-600 flex justify-between items-center">
+          <span>残り時間: {formatTime(timeLeft)}</span>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            type="button"
+            onClick={handleResendCode}
+            disabled={isResending || timeLeft > 540} // 9分以上残っている場合は無効化
+            className={`text-navy-600 hover:text-navy-800 text-sm ${
+              isResending || timeLeft > 540 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isResending ? '送信中...' : 'コードを再送信'}
+          </motion.button>
         </div>
 
-        {error && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-red-500 text-sm text-center"
-          >
-            {error}
-          </motion.p>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`text-sm text-center p-2 rounded ${
+                error.includes('再送信しました') 
+                  ? 'bg-green-50 text-green-600' 
+                  : 'bg-red-50 text-red-500'
+              }`}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex space-x-4">
           <motion.button
