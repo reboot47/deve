@@ -42,19 +42,18 @@ export async function POST(request: Request) {
 
     try {
       // VerificationToken モデルを使用して認証コードを保存
-      await prisma.verificationToken.upsert({
-        where: {
-          identifier_token: {
-            identifier: phoneNumber,
-            token: code
-          }
-        },
-        update: { expires: expiresAt },
-        create: { 
-          identifier: phoneNumber, 
-          token: code, 
-          expires: expiresAt 
-        },
+      // 既存のコードがあれば削除
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: phoneNumber }
+      });
+      
+      // 新しいコードを作成
+      await prisma.verificationToken.create({
+        data: {
+          identifier: phoneNumber,
+          token: code,
+          expires: expiresAt
+        }
       });
     } catch (error) {
       console.error('認証コード保存エラー:', error);
