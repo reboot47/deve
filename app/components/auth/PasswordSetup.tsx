@@ -47,7 +47,11 @@ export default function PasswordSetup({
         passwordLength: password.length,
       });
 
-      const response = await fetch('/api/auth/reset-password', {
+      // BASE_URLを取得（開発環境とプロダクション環境で異なる場合がある）
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      console.log('API URL設定:', { baseUrl, fullUrl: `${baseUrl}/api/auth/reset-password` });
+      
+      const response = await fetch(`/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,14 +61,18 @@ export default function PasswordSetup({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
+        console.error('パスワードリセットエラー:', { status: response.status, data });
         throw new Error(data.error || 'パスワードの設定に失敗しました');
       }
 
+      const data = await response.json();
+      console.log('パスワードリセット成功:', data);
+      
       router.push('/login?registered=true');
     } catch (error) {
+      console.error('例外発生:', error);
       setError(error instanceof Error ? error.message : '予期せぬエラーが発生しました');
     } finally {
       setIsLoading(false);
