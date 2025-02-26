@@ -2,20 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer components {
+  .btn-navy {
+    @apply bg-navy-700 text-white hover:bg-navy-800 focus:ring-navy-600;
+  }
+  .input-navy {
+    @apply border-gray-300 focus:ring-navy-600 focus:border-navy-600;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #000;
+  background: #fff;
 }
