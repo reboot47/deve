@@ -44,25 +44,26 @@ export async function POST(request: Request) {
     try {
       console.log('認証コード生成: ', { phoneNumber, codeLength: code?.length });
       
-      // Prismaのトランザクション内で実行
-      const result = await prisma.$transaction(async (tx) => {
-        // 既存のコードを削除
-        await tx.verificationToken.deleteMany({
-          where: { identifier: phoneNumber }
-        });
+      try {
+        // VerificationTokenの完全な削除
+        await prisma.$executeRaw`TRUNCATE TABLE "VerificationToken"`;
         
-        // 新しいコードを作成
-        return await tx.verificationToken.create({
-          data: {
-            id: crypto.randomUUID(), // 明示的にIDを生成
-            identifier: phoneNumber,
-            token: code,
-            expires: expiresAt
-          }
-        });
-      });
-      
-      console.log('認証コード保存成功:', { token_id: result.id });
+        console.log('テーブルクリア完了');
+        
+        // 新しいコードを追加
+        const newToken = await prisma.$executeRaw`
+          INSERT INTO "VerificationToken" (id, identifier, token, expires)
+          VALUES (${crypto.randomUUID()}, ${phoneNumber}, ${code}, ${expiresAt})
+        `;
+        
+        console.log('SQL挿入完了:', newToken);
+      } catch (sqlError) {
+        console.error('SQLエラー:', sqlError);
+        return NextResponse.json(
+          { error: 'データベース操作に失敗しました' },
+          { status: 500 }
+        );
+      }
     } catch (error) {
       console.error('認証コード保存エラーの詳細:', error);
       
