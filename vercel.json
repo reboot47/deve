@@ -1,5 +1,16 @@
 {
-  "buildCommand": "npm run build",
+  "env": {
+    "NEXTAUTH_URL": {
+      "development": "http://localhost:3000",
+      "production": null
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "buildCommand": "prisma generate && prisma db push && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",

@@ -1,70 +1,43 @@
 import { getToken } from 'next-auth/jwt';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// シンプルなミドルウェアの実装
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const { pathname } = request.nextUrl;
+export async function middleware(req: NextRequest) {
+  console.log('ミドルウェア実行:', req.nextUrl.pathname);
+  
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  console.log('トークン状態:', !!token);
+  
+  // 認証が必要なルート
+  const authRoutes = ['/dashboard', '/settings'];
+  // 認証済みユーザーがアクセスできないルート
+  const publicAuthRoutes = ['/login', '/register', '/forgot-password'];
+  
+  const isAuthRoute = authRoutes.some(route => 
+    req.nextUrl.pathname.startsWith(route)
+  );
+  
+  const isPublicAuthRoute = publicAuthRoutes.some(route => 
+    req.nextUrl.pathname === route || req.nextUrl.pathname.startsWith(route)
+  );
 
-  // デバッグログ
-  console.log('Middleware:', {
-    pathname,
-    hasToken: !!token,
-  });
-
-  // 認証が必要なパス
-  const protectedPaths = ['/dashboard', '/settings', '/profile'];
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
-
-  // 認証ページのパス
-  const authPaths = ['/login', '/register', '/forgot-password'];
-  const isAuthPath = authPaths.some(path => pathname.startsWith(path));
-
-  // 認証済みユーザーがアクセスできないパス
-  if (token && isAuthPath) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // ログイン済みの場合、ログインページなどにアクセスするとダッシュボードにリダイレクト
+  if (isPublicAuthRoute && token) {
+    console.log('認証済みユーザーが公開認証ルートにアクセス - リダイレクト');
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // 未認証ユーザーが認証必須のパスにアクセス
-  if (!token && isProtectedPath) {
-    const redirectUrl = new URL('/login', request.url);
-    redirectUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // APIルートとNext.jsの内部ルートは無視
-  if (
-    request.nextUrl.pathname.startsWith('/api') ||
-    request.nextUrl.pathname.startsWith('/_next')
-  ) {
-    return NextResponse.next();
-  }
-
-  // ルートページへのアクセスは常に許可
-  if (request.nextUrl.pathname === '/') {
-    return NextResponse.next();
+  // 未ログインで認証が必要なページにアクセスするとログインページにリダイレクト
+  if (isAuthRoute && !token) {
+    console.log('未認証ユーザーが保護されたルートにアクセス - リダイレクト');
+    return NextResponse.redirect(
+      new URL(`/login?callbackUrl=${encodeURIComponent(req.url)}`, req.url)
+    );
   }
 
   return NextResponse.next();
 }
 
-// マッチャーの設定
+// ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/settings/:path*',
-    '/profile/:path*',
-    '/login/:path*',
-    '/register/:path*',
-    '/forgot-password/:path*',
-    /*
-     * 以下を除く全てのルートにマッチ:
-     * - api (API routes)
-     * - _next/static (静的ファイル)
-     * - _next/image (画像最適化ファイル)
-     * - favicon.ico (ファビコン)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

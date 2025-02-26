@@ -21,14 +21,20 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      console.log('ログイン試行:', { phone });
+      
       const result = await signIn('credentials', {
         phone,
         password,
         redirect: false,
+        callbackUrl,
       });
+
+      console.log('ログイン結果:', result);
 
       if (result?.error) {
         setError('電話番号またはパスワードが正しくありません');
+        console.error('ログインエラー:', result.error);
       } else {
         router.push(callbackUrl);
       }
